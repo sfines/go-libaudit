@@ -22,6 +22,8 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
+	"unicode"
+	"strings"
 )
 
 func parseSockaddr(s string) (map[string]string, error) {
@@ -88,6 +90,7 @@ func parseSockaddr(s string) (map[string]string, error) {
 }
 
 func hexToASCII(h string) (string, error) {
+
 	output, err := hex.DecodeString(h)
 
 	nullTerm := bytes.Index(output, []byte{0})
@@ -95,7 +98,16 @@ func hexToASCII(h string) (string, error) {
 		output = output[:nullTerm]
 	}
 
-	return string(output), err
+	acceptChar := func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r) && !unicode.IsPunct(r) && !unicode.IsSpace(r) && !unicode.IsControl(r)
+	}
+
+	s_res := strings.IndexFunc(string(output), acceptChar)
+	if s_res != -1 {
+		return h, errors.New("Not Hex Encoded")
+	} else {
+		return string(output), err
+	}
 }
 
 func hexToDec(h string) (int32, error) {
